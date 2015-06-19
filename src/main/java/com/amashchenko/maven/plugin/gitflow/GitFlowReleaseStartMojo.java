@@ -94,6 +94,9 @@ public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
             // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
             mvnSetVersions(version);
 
+            // mvn versions:use-releases -DgenerateBackupPoms=false
+            mvnSetRelease();
+
             // git commit -a -m updating poms for release
             gitCommit("updating poms for release " + version);
 

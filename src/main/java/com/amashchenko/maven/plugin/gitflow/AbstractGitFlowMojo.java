@@ -377,6 +377,11 @@ public abstract class AbstractGitFlowMojo extends AbstractMojo {
                 + version, "-DgenerateBackupPoms=false");
     }
 
+    protected void mvnSetRelease() throws MojoFailureException, CommandLineException {
+    	getLog().info(msg.getMessage(LogMessages.removing_snapshots));
+    	executeMvnCommand("org.codehaus.mojo:versions-maven-plugin:2.1:use-releases", "-DgenerateBackupPoms=false");
+    }
+
     /**
      * Executes mvn clean test.
      * 
