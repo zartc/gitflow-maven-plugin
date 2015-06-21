@@ -24,11 +24,15 @@ import org.codehaus.plexus.components.interactivity.PrompterException;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.cli.CommandLineException;
 
+import com.amashchenko.maven.plugin.gitflow.i18n.CommitMessages;
+import com.amashchenko.maven.plugin.gitflow.i18n.ErrorMessages;
+import com.amashchenko.maven.plugin.gitflow.i18n.PromptMessages;
+
 /**
  * The git flow release start mojo.
- * 
+ *
  * @author Aleksandr Mashchenko
- * 
+ *
  */
 @Mojo(name = "release-start", aggregator = true)
 public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
@@ -44,14 +48,12 @@ public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
             checkUncommittedChanges();
 
             // git for-each-ref --count=1 refs/heads/release/*
-            final String releaseBranch = executeGitCommandReturn(
-                    "for-each-ref", "--count=1",
-                    "refs/heads/" + gitFlowConfig.getReleaseBranchPrefix()
-                            + "*");
+            String pattern = "refs/heads/" + gitFlowConfig.getReleaseBranchPrefix() + "*";
+			final String releaseBranch = executeGitCommandReturn(
+                    "for-each-ref", "--count=1", pattern);
 
             if (StringUtils.isNotBlank(releaseBranch)) {
-                throw new MojoFailureException(
-                        "Release branch already exists. Cannot start release.");
+                throw new MojoFailureException(msg.getMessage(ErrorMessages.release_branch_already_exists));
             }
 
             // need to be in develop to get correct project version
@@ -76,8 +78,8 @@ public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
             String version = null;
             if (settings.isInteractiveMode()) {
                 try {
-                    version = prompter.prompt("What is release version? ["
-                            + defaultVersion + "]");
+                    version = prompter.prompt(
+                    		msg.getMessage(PromptMessages.release_branch_name_to_create_prompt, defaultVersion));
                 } catch (PrompterException e) {
                     getLog().error(e);
                 }
@@ -88,14 +90,14 @@ public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
             }
 
             // git checkout -b release/... develop
-            gitCreateAndCheckout(gitFlowConfig.getReleaseBranchPrefix()
-                    + version, gitFlowConfig.getDevelopmentBranch());
+            gitCreateAndCheckout(gitFlowConfig.getReleaseBranchPrefix() + version,
+            		gitFlowConfig.getDevelopmentBranch());
 
             // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
             mvnSetVersions(version);
 
             // git commit -a -m updating poms for release
-            gitCommit("updating poms for release");
+            gitCommit(msg.getMessage(CommitMessages.updating_pom_for_release_version, version));
 
             if (installProject) {
                 // mvn clean install
